@@ -1,12 +1,12 @@
-from utils import ipython_info
+from .utils import ipython_info
 if ipython_info() == "notebook":
     from tqdm import tnrange as trange
     from tqdm import tqdm_notebook as tqdm
 else:
     from tqdm import tqdm, trange
 
-from PolicyEpsilonGreedy import PolicyEpsilonGreedy
-from LearningRate import LearningRate
+from .PolicyEpsilonGreedy import PolicyEpsilonGreedy
+from .LearningRate import LearningRate
 
 import numpy as np
 import time

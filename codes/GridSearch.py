@@ -1,4 +1,4 @@
-from utils import ipython_info
+from .utils import ipython_info
 if ipython_info() == "notebook":
     from tqdm import tqdm_notebook as tqdm
 else:

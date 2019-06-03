@@ -1,4 +1,4 @@
-from Q import Q
+from .Q import Q
 
 import matplotlib.pyplot as plt
 import numpy as np
