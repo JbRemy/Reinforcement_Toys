@@ -2,6 +2,7 @@ from Q import Q
 
 import matplotlib.pyplot as plt
 import numpy as np
+import operator
 
 class  GridWorld(object):
     def __init__(self, grid=None):
@@ -19,18 +20,22 @@ class  GridWorld(object):
                 Any combination of those basics cells are possible
                 Hence 100101=37 is an end cell with a wall right and a wall left
         """
-        assert isinstance(grid, str), "Random generation of a grid not\
-                implemented yet, please define a grid."
+        assert isinstance(grid, str) or isinstance(grid, tuple), \
+            "Grid must be a file or tuple to generate a random grid"
         if isinstance(grid, str):
             with open(grid, "r") as f:
                 self.grid = np.array([[int(_) for _ in line.split(";")] for\
                                       line in f.readlines()])
+        
+        elif isinstance(grid, tuple):
+            self.grid = self.generate_grid_(grid)
 
         self.action_space = [8,4,2,1]
         self.action_dict = {"up": 8, "right":4, "down": 2, "left": 1}
         self.start_coordinates = np.where([[self.count_ones_binary(_+16) ==\
                                             self.count_ones_binary(_) for _ in\
                                             line] for line in self.grid])
+        self.end_coordinates = np.where([[_>=32 for _ in line] for line in self.grid])
         self.Q = Q(list(self.action_dict.keys()), state_shape=self.grid.shape)
         self.reset()
 
@@ -126,6 +131,15 @@ class  GridWorld(object):
                         y = [i+y_modif[0], i+y_modif[1]]
                         plt.plot(x,y,"k-", linewidth=5)
 
+        plt.text(x=self.start_coordinates[1]+0.5,
+                 y=self.start_coordinates[0]+0.5, s="START",
+                    bbox={'facecolor':'purple','alpha':1,'edgecolor':'none','pad':1},
+                    ha='center', va='center', color='white')
+        plt.text(x=self.end_coordinates[1]+0.5,
+                 y=self.end_coordinates[0]+0.5, s="END",
+                    bbox={'facecolor':'purple','alpha':1,'edgecolor':'none','pad':1},
+                    ha='center', va='center', color='white')
+
         if show:
             plt.show()
 
@@ -161,8 +175,8 @@ class  GridWorld(object):
             plt.show()
 
 
-    @classmethod
-    def get_trace_(cls, n):
+    @staticmethod
+    def get_trace_(n):
         """
         returns the path to trace the line [x_start, x_end], [y_start, y_end]
         Args:
@@ -181,8 +195,8 @@ class  GridWorld(object):
             return [0,0], [0,1]
 
 
-    @classmethod
-    def action_results_(cls, action):
+    @staticmethod
+    def action_results_(action):
         """
         returns the state modification of an action
         Args: see self.step
@@ -199,9 +213,71 @@ class  GridWorld(object):
         elif action == 1:
             return -1, 0
 
-    @classmethod
-    def count_ones_binary(cls, number):
+    @staticmethod
+    def count_ones_binary(number):
         return len([one for one in bin(number)[2:] if one=="1"])
+
+    @staticmethod
+    def generate_grid_(size):
+        grid = np.zeros(shape=size, dtype=int)
+        visited = grid != 0
+
+        start_x = np.random.randint(0, size[1])
+        grid[:,:] += 15
+        grid[-1, start_x] += 16
+
+        visited[-1,start_x] = True 
+
+        cell = (size[0]-1, start_x)
+        stack = [cell]
+        while len(stack) > 0:
+            unvisited_neighbors = [pos for pos in
+                                   GridWorld.get_neighbors_(cell, clip=size) if not
+                                   visited[pos]]
+            if len(unvisited_neighbors) > 0:
+                next_cell = unvisited_neighbors[np.random.randint(len(unvisited_neighbors))]
+                cell_modif, next_cell_modif = GridWorld.get_wall_(cell, next_cell)
+                grid[cell] -= cell_modif
+                grid[next_cell] -= next_cell_modif
+                stack.append(next_cell)
+                cell = next_cell
+                visited[cell] = True
+                last_visited = cell
+
+
+            else:
+                cell = stack.pop(np.random.randint(len(stack)))
+
+        grid[last_visited] += 32
+        return grid
+                
+    @staticmethod
+    def get_wall_(state_1, state_2):
+        """
+        returns the wall corresponding to the transition from state one to
+        state two
+        Args: tuple, tuple
+        """
+        transition = tuple(map(operator.sub, state_2, state_1))
+        if transition == (0, -1):
+            return 1, 4
+
+        elif transition == (1,0):
+            return 2, 8
+
+        elif transition == (0, 1):
+            return 4, 1
+
+        elif transition == (-1, 0):
+            return 8, 2
+
+    @staticmethod
+    def get_neighbors_(cell, clip):
+        return [pos for pos in [tuple(map(operator.add, cell, (1,0))), 
+                tuple(map(operator.add, cell, (-1,0))), 
+                tuple(map(operator.add, cell, (0,1))),
+                tuple(map(operator.add, cell, (0,-1)))] if\
+                    all([0 <= _ < s for _,s in zip(pos, clip)])]
 
 
 
