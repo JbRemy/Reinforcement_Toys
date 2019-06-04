@@ -1,8 +1,6 @@
 import io
 import os
-import base64
 from IPython.display import HTML
-import cv2
 import numpy as np
 import sys
 
