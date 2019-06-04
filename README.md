@@ -28,7 +28,7 @@ This notebook proposes a theoritical introducation to _Q-Learning_, a short pres
 
 ### `CartPole`
 
-This notebook introduces the discretization of the _Q-table_ and demonstrates the importance of the hyper-parameters. The problem is applied to the `CartPole-v0` environment of the [Gym AI][https://gym.openai.com] library.
+This notebook introduces the discretization of the _Q-table_ and demonstrates the importance of the hyper-parameters. The problem is applied to the `CartPole-v1` environment of the [Gym AI](https://gym.openai.com) library.
 
 
 ## TODO
