@@ -1,4 +1,4 @@
-# Reiforcement Toys
+# Reinforcement Toys
 
 **This repository proposes an introduction du Q-Learning on some toy exemples**
 
