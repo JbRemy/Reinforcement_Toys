@@ -5,23 +5,35 @@ import numpy as np
 
 n_checkpoints = 10
 track_center = [400,300]
+directions_dict = {
+    pygame.K_LEFT: 0,
+    pygame.K_UP: 1,
+    pygame.K_RIGHT: 2,
+    pygame.K_LEFT: 3
+}
 
 class Track(Sprite):
-    def __init__(self, game, f, grid_file=None, grid_size=None):
+    def __init__(self, game, f, start_points_file=None, grid_file=None, grid_size=None):
         super(Sprite, self).__init__()
         self.game = game
         self.image = pygame.image.load(f).convert_alpha()
         self.image = pygame.transform.scale(self.image, self.game.window_size)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
+
         if not grid_file is None:
             self.grid_file = grid_file
             self.grid = np.load(self.grid_file)
             self.grid_size = self.grid.shape[0]
-
         elif not grid_size is None:
             self.grid_size = grid_size
             self.grid = np.zeros((self.grid_size, self.grid_size), dtype=int)
+
+        self.start_points_file = start_points_file
+        if not start_points_file is None:
+            self.start_points = np.load(self.start_points)
+        else:
+            self.start_points = []
 
         self.display_grid = False
 
@@ -63,6 +75,14 @@ class Track(Sprite):
                 case.fill([pygame.Color('blue'),pygame.Color('purple')][flag-1])
                 self.game.screen.blit(case, (x*self.game.window_size[0]/self.grid_size,
                                              y*self.game.window_size[1]/self.grid_size))
+        for (x,y, arrow) in enumerate(self.start_points):
+            case = pygame.Surface((self.game.window_size[0]/self.grid_size,
+                                  self.game.window_size[1]/self.grid_size))
+            case.set_alpha(100)
+            case = case.convert()
+            case.fill(pygame.Color('red'))
+            self.game.screen.blit(case, (x*self.game.window_size[0]/self.grid_size,
+                                         y*self.game.window_size[1]/self.grid_size))
 
         for x in [_*self.game.window_size[0]/self.grid_size for _ in range(self.grid_size)]:
             pygame.draw.lines(self.game.screen, pygame.Color('white'), False,
@@ -77,7 +97,12 @@ class Track(Sprite):
         self.grid[x,y] = (self.grid[x,y]+1) % 3
         np.save(self.grid_file, self.grid)
 
-
+    def build_starting_points(self, pos, arrow):
+        x = int(pos[0] / self.game.window_size[0] * self.grid_size)
+        y = int(pos[1] / self.game.window_size[1] * self.grid_size)
+        direction = directions_dict[arrow]
+        self.start_points.append([x,y,])
+        np.save(self.start_points_file. self.start_points)
 
 
 

@@ -16,10 +16,8 @@ def check_nans(x):
         return False
 
 class Agent(object):
-    def __init__(self, game):
+    def __init__(self, game, weights=None):
         self.model = Sequential()
-        self.model.add(Dense(32, input_dim=12, activation='relu',
-                             kernel_initializer=VarianceScaling(scale=2.0)))
         self.model.add(Dense(32, input_dim=12, activation='relu',
                              kernel_initializer=VarianceScaling(scale=2.0)))
         self.model.add(Dense(9, activation='linear',
@@ -29,10 +27,12 @@ class Agent(object):
         self.counter = 0
         self.target_model = clone_model(self.model)
         self.target_model.set_weights(self.model.get_weights())
+        if not weights is None:
+            self.model.load_weights(weights)
 
-    def train(self, lr=0.01, n_episodes=500, max_t=1000, epsilon=0.9, 
-              min_epsilon=0.05, batch_size=128, discount=0.999, max_memory_size=10000,
-             action_per_seconds=2, epsilon_rate=5e-2, C=10):
+    def train(self, lr=0.001, n_episodes=500, max_t=1000, epsilon=0.9, 
+              min_epsilon=0.05, batch_size=128, discount=0.99, max_memory_size=10000,
+             action_per_seconds=4, epsilon_rate=5e-2, C=15):
         sgd = optimizers.SGD(lr=lr)
         self.model.compile(loss=huber_loss, optimizer=sgd)
         self.trainning = True
@@ -40,7 +40,6 @@ class Agent(object):
         self.min_epsilon = min_epsilon
         self.epsilon_rate = epsilon_rate
         self.X = []
-        self.previous_state = self.build_state()
         self.previous_action = 8
         self.batch_size = batch_size
         self.discount = discount
@@ -53,9 +52,13 @@ class Agent(object):
         self.running_reward = 0
         self.running_score = 0
         self.C=C
+        self.best_score = 0
         self.game.game_loop()
         
     def act(self, reward):
+        if not hasattr(self, 'previous_state') or self.game.car.has_reset:
+            self.previous_state = self.build_state()
+
         self.running_score += reward
         self.running_reward += reward
         state = self.build_state()
@@ -104,6 +107,9 @@ class Agent(object):
                     else:
                         print("Finished cycle %i, score: %.2f" %
                               (self.cycle, self.running_score))
+                
+                if self.running_score > self.best_score:
+                    self.model.save_weights('agents/best_weights')
 
                 self.running_score = 0
 

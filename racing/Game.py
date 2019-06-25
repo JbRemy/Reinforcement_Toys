@@ -5,14 +5,16 @@ from Track import Track
 from Car import Car
 
 BLINK_EVENT = pygame.USEREVENT + 0
-EDIT_MODE = True
+EDIT_MODE_GRID = True
+EDIT_MODE_STARTS = True
+
 
 class Game(object):
     def __init__(self, window_size=(860,544), caption='Random Program', fps=60,
-                agent = 'human'):
+                agent = 'human', render=True):
         self.max_t = 10000000
         self.agent = agent
-        self.RENDER = True
+        self.RENDER = render
         self.fps = fps
         self.window_size = window_size
         # Initialization of the window
@@ -39,6 +41,9 @@ class Game(object):
         self.screen.blit(self.background, (0, 0))
         pygame.display.flip()
         # Game loop
+        if not self.RENDER:
+            return
+
         while 1:
             for event in pygame.event.get():
                 if self.check_QUIT(event):
@@ -73,10 +78,24 @@ class Game(object):
                 if self.check_QUIT(event):
                     return 
 
-                if event.type == pygame.MOUSEBUTTONUP and EDIT_MODE:
+                if event.type == pygame.MOUSEBUTTONUP and EDIT_MODE_GRID:
                     self.track.fill_grid(pygame.mouse.get_pos())
 
-                if event.type == pygame.KEYDOWN:
+                if event.type == pygame.MOUSEBUTTONUP and EDIT_MODE_STARTS:
+                    pressed = pygame.key.get_pressed()
+                    pressed_key = None
+                    for _ in [pygame.K_UP,pygame.K_RIGHT,pygame.K_DOWN,pygame.K_LEFT]:
+                        if pressed[_]:
+                            pressed_key = _
+
+                    if not pressed_key is None:
+                        self.track.build_starting_points(
+                            pygame.mouse.get_pos(),
+                            pressed_key
+                        )
+
+                if event.type == pygame.KEYDOWN and not any([EDIT_MODE_GRID,
+                                                             EDIT_MODE_STARTS]):
                     pressed = pygame.key.get_pressed()
                     self.car.update(pressed) 
                     self.track.update(pressed) 
