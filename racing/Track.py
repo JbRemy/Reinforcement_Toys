@@ -1,3 +1,4 @@
+
 import pygame
 from pygame.sprite import Sprite
 import math
@@ -6,10 +7,10 @@ import numpy as np
 n_checkpoints = 10
 track_center = [400,300]
 directions_dict = {
-    pygame.K_LEFT: 0,
-    pygame.K_UP: 1,
-    pygame.K_RIGHT: 2,
-    pygame.K_LEFT: 3
+    pygame.K_LEFT: 2,
+    pygame.K_UP: 3,
+    pygame.K_RIGHT: 0,
+    pygame.K_DOWN: 1
 }
 
 class Track(Sprite):
@@ -31,7 +32,10 @@ class Track(Sprite):
 
         self.start_points_file = start_points_file
         if not start_points_file is None:
-            self.start_points = np.load(self.start_points)
+            try:
+                self.start_points = np.load(self.start_points_file).tolist()
+            except FileNotFoundError:
+                self.start_points = []
         else:
             self.start_points = []
 
@@ -75,7 +79,7 @@ class Track(Sprite):
                 case.fill([pygame.Color('blue'),pygame.Color('purple')][flag-1])
                 self.game.screen.blit(case, (x*self.game.window_size[0]/self.grid_size,
                                              y*self.game.window_size[1]/self.grid_size))
-        for (x,y, arrow) in enumerate(self.start_points):
+        for (x,y, arrow) in self.start_points:
             case = pygame.Surface((self.game.window_size[0]/self.grid_size,
                                   self.game.window_size[1]/self.grid_size))
             case.set_alpha(100)
@@ -101,8 +105,8 @@ class Track(Sprite):
         x = int(pos[0] / self.game.window_size[0] * self.grid_size)
         y = int(pos[1] / self.game.window_size[1] * self.grid_size)
         direction = directions_dict[arrow]
-        self.start_points.append([x,y,])
-        np.save(self.start_points_file. self.start_points)
+        self.start_points.append([x,y,direction])
+        np.save(self.start_points_file, self.start_points)
 
 
 

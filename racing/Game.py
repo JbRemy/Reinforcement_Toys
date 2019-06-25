@@ -5,13 +5,13 @@ from Track import Track
 from Car import Car
 
 BLINK_EVENT = pygame.USEREVENT + 0
-EDIT_MODE_GRID = True
-EDIT_MODE_STARTS = True
-
+EDIT_MODE_GRID = False
+EDIT_MODE_STARTS = False
 
 class Game(object):
     def __init__(self, window_size=(860,544), caption='Random Program', fps=60,
-                agent = 'human', render=True):
+                agent = 'human', render=True, random_start=True):
+        self.random_start = random_start
         self.max_t = 10000000
         self.agent = agent
         self.RENDER = render
@@ -68,6 +68,7 @@ class Game(object):
         self.track = Track(self,
                            f='tracks/1/PinClipart.com_race-clipart_41252.png',
                            grid_file='tracks/1/grid.npy',
+                           start_points_file='tracks/1/start_points.npy',
                            grid_size=25)
         self.car = Car(self)
         score = 0
@@ -94,8 +95,7 @@ class Game(object):
                             pressed_key
                         )
 
-                if event.type == pygame.KEYDOWN and not any([EDIT_MODE_GRID,
-                                                             EDIT_MODE_STARTS]):
+                if event.type == pygame.KEYDOWN:
                     pressed = pygame.key.get_pressed()
                     self.car.update(pressed) 
                     self.track.update(pressed) 

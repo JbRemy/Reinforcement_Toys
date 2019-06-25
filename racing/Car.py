@@ -33,12 +33,20 @@ class Car(Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.image_original = self.image
         # Caracteristics
-        self.pos = np.array([550,480], 'float32')
+        self.theta = 0
+        if len(self.game.track.start_points) == 0 or not self.game.random_start:
+            self.pos = np.array([550,480], 'float32')
+
+        else:
+            start_point = self.game.track.start_points[np.random.randint(len(self.game.track.start_points))]
+            self.pos = (start_point[0]*self.game.window_size[0] / self.game.track.grid_size,
+                        start_point[1]*self.game.window_size[1] / self.game.track.grid_size)
+            self.theta = start_point[2] * math.pi / 2
+
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
         self.speed = 0
         self.acc = 0
-        self.theta = 0
         self.theta_wheels = 0 
         self.F=0
         self.lat_speed = 0

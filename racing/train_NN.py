@@ -10,7 +10,7 @@ from Game import Game
 from Agent import Agent
  
 def main():
-    game = Game(caption='racing', render=False)
+    game = Game(caption='racing', render=True)
     agent = Agent(game)
     agent.train()
 
