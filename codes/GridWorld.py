@@ -1,4 +1,5 @@
 from .Q import Q
+from .V import V
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,36 +32,44 @@ class  GridWorld(object):
             self.grid = self.generate_grid_(grid)
 
         self.action_space = [8,4,2,1]
+        self.action_space.n = 4
+        self.observation_space = self.grid
+        self.observation_space.n = self.grid.shape()[0]*self.grid.shape()[0]
         self.action_dict = {"up": 8, "right":4, "down": 2, "left": 1}
         self.start_coordinates = np.where([[self.count_ones_binary(_+16) ==\
                                             self.count_ones_binary(_) for _ in\
                                             line] for line in self.grid])
         self.end_coordinates = np.where([[_>=32 for _ in line] for line in self.grid])
         self.Q = Q(list(self.action_dict.keys()), state_shape=self.grid.shape)
+        self.V = V(state_shape=self.grid.shape)
         self.reset()
 
-    def reset(self, random_init=False):
+    def reset(self, random_init=False, state=None, path=True):
         """
         Resets the agent to the start position and time to 0.
         """
         if not random_init:
-            self.x = self.start_coordinates[1][0]
-            self.y = self.start_coordinates[0][0]
-            self.current_cell = self.grid[self.y, self.x]
+            if not state is None: 
+                self.y, self.x = state
+            else:
+                self.x = self.start_coordinates[1][0]
+                self.y = self.start_coordinates[0][0]
 
         else:
             self.current_cell = 0
             while self.current_cell == 0:
                 self.x = np.random.randint(low=0, high=self.grid.shape[1])
                 self.y = np.random.randint(low=0, high=self.grid.shape[0])
-                self.current_cell = self.grid[self.y, self.x]
 
-        self.t = 0
-        self.path = []
+        self.current_cell = self.grid[self.y, self.x]
+
+        if path:
+            self.t = 0
+            self.path = []
 
         return [self.y, self.x]
 
-    def step(self, action):
+    def step(self, action, memory=True):
         """
         Perfomrs the asked action
         Args:
@@ -80,12 +89,17 @@ class  GridWorld(object):
             self.x += x_moove
             self.y += y_moove
 
-        self.path.append([self.x, self.y])
+        if memory:
+            self.path.append([self.x, self.y])
         self.t += 1
         self.current_cell = self.grid[self.y, self.x]
         done = self.check_terminate_()
+        if done:
+            reward = 100 
+        else :
+            reward = 0
 
-        return [self.y, self.x], -1, done
+        return [self.y, self.x], reward, done, None
         
     def check_action_(self, action):
         """
@@ -160,13 +174,16 @@ class  GridWorld(object):
         if show:
             plt.show()
 
-    def render_V(self, fig=False, show=True):
+    def render_V(self, fig=False, show=True, f='V'):
         """
-        plots the Q map
+        plots the V map
         """
         self.Q.get_V()
         self.render_board(show=False, fig=fig)
-        plt.pcolormesh(self.Q.V, cmap="hot")
+        if f == 'Q':
+            plt.pcolormesh(self.Q.V, cmap="hot")
+        if f == 'V':
+            plt.pcolormesh(self.V.W, cmap="hot")
         ax = plt.gca()
         ax.set_aspect('equal')
         plt.title("State of the value function")
