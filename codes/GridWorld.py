@@ -32,9 +32,9 @@ class  GridWorld(object):
             self.grid = self.generate_grid_(grid)
 
         self.action_space = [8,4,2,1]
-        self.action_space.n = 4
+        setattr(self.action_space, "n" , 4)
         self.observation_space = self.grid
-        self.observation_space.n = self.grid.shape()[0]*self.grid.shape()[0]
+        setattr(self.observation_space, "n" , self.grid.shape()[0]*self.grid.shape()[0])
         self.action_dict = {"up": 8, "right":4, "down": 2, "left": 1}
         self.start_coordinates = np.where([[self.count_ones_binary(_+16) ==\
                                             self.count_ones_binary(_) for _ in\
