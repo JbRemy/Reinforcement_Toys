@@ -93,9 +93,9 @@ class  GridWorld(object):
         self.current_cell = self.grid[self.y, self.x]
         done = self.check_terminate_()
         if done:
-            reward = 0 
+            reward = 1 
         else :
-            reward = -1
+            reward = 0
 
         return [self.y, self.x], reward, done, None
         
@@ -180,6 +180,7 @@ class  GridWorld(object):
         self.render_board(show=False, fig=fig)
         if f == 'Q':
             plt.pcolormesh(self.Q.V, cmap="hot")
+
         if f == 'V':
             plt.pcolormesh(self.V.W, cmap="hot")
         ax = plt.gca()
