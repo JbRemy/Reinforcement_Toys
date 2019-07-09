@@ -93,9 +93,9 @@ class  GridWorld(object):
         self.current_cell = self.grid[self.y, self.x]
         done = self.check_terminate_()
         if done:
-            reward = 100 
+            reward = 0 
         else :
-            reward = 0
+            reward = -1
 
         return [self.y, self.x], reward, done, None
         
@@ -172,7 +172,7 @@ class  GridWorld(object):
         if show:
             plt.show()
 
-    def render_V(self, fig=False, show=True, f='V'):
+    def render_V(self, fig=False, show=True, f='Q'):
         """
         plots the V map
         """
