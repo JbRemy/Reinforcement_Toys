@@ -1,16 +1,57 @@
 from .Q import Q
 from .V import V
 
+from typing import Union, Type, List
+
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
 
 class  GridWorld(object):
-    def __init__(self, grid=None):
-        """
+    """A class to generate and interact with a gridworld environement
+
+    Attributes:
+        Q (Q): The empirical Q function of the environement.
+        V (V): The empirical Value function of the environement.
+        x, y (int): Coordinates of the agent in the grid.
+        t (int): The time stamp in the current run.
+        path (list): The path taken during the current run
+
+    Methods:
+        reset(self, random_init: bool=False, state: Optional[Tuple[int]]=None)
+              -> None:
+            Resets the agent to the start/random/required position and time to 0.
+        step(self, action: Union[str, int]) 
+             -> Tuple[Union[Tuple[int], int, bool, None]]:
+            Perfomrs the asked action
+        render_path_and_V(self, scale: int=1.5) -> None:
+            Plots the path taken by the agent and the Value function.
+        render_board(self, scale= float:1.5, show: bool=True,
+                     fig: bool=False) -> None:
+            displays a figure with the labirynth.
+        render_path(self, fig: bool=False, show: bool=True) -> None:
+            Plots the path taken by the agent up to now
+        render_V(self, fig: bool=False, show: bool=True,from: str='Q') -> None:
+            Plots the Value function
+
+    Constants:
+        ACTION_SPACE (list): The possible actions in int
+        ACTION_DICT (dict): The possible actions in strings
+            "up", "right", "down", "left"
+    """
+    ACTION_SPACE = [8,4,2,1]
+    ACTION_DICT = {"up": 8, "right":4, "down": 2, "left": 1}
+    _TRACE = [[[0,1], [0,0]], [[1,1], [0,1]], [[0,1], [1,1]], [[0,0], [0,1]]]
+    def __init__(self, grid: Union[str, tuple]) -> None:
+        """Initializes the grid
+
+        If a filename is passed then the grid is parsed, otherwise, if a tuple
+        is provided, then a random grid is generated.
+        Also initialises a Q and a Value function for the grid
+
         Args:
-            > grid: (np.array) defines the labyrinth.
-                in binary:
+            grid (str, tuple): A file name or the size of the requested grid.
+                The grid is defined with the following synthax:
                     000000 (0) blank cell
                     001000 (8) wall up
                     000100 (4) wall right
@@ -19,67 +60,85 @@ class  GridWorld(object):
                     010000 (16) start
                     100000 (32) end
                 Any combination of those basics cells are possible
-                Hence 100101=37 is an end cell with a wall right and a wall left
+                Hence 100101=37 is an end cell with a wall to the right and 
+                a wall to the left
+
+        Returns:
+            None
         """
         assert isinstance(grid, str) or isinstance(grid, tuple), \
             "Grid must be a file or tuple to generate a random grid"
         if isinstance(grid, str):
             with open(grid, "r") as f:
-                self.grid = np.array([[int(_) for _ in line.split(";")] for\
+                self._grid = np.array([[int(_) for _ in line.split(";")] for\
                                       line in f.readlines()])
         
         elif isinstance(grid, tuple):
-            self.grid = self.generate_grid_(grid)
+            self._grid = self._generate_grid_(grid)
 
-        self.action_space = [8,4,2,1]
-        self.observation_space = self.grid
-        self.action_dict = {"up": 8, "right":4, "down": 2, "left": 1}
-        self.start_coordinates = np.where([[self.count_ones_binary(_+16) ==\
+        self._start_coordinates = np.where([[self.count_ones_binary(_+16) ==\
                                             self.count_ones_binary(_) for _ in\
-                                            line] for line in self.grid])
-        self.end_coordinates = np.where([[_>=32 for _ in line] for line in self.grid])
-        self.Q = Q(list(self.action_dict.keys()), state_shape=self.grid.shape)
-        self.V = V(state_shape=self.grid.shape)
+                                            line] for line in self._grid])
+        self._end_coordinates = np.where([[_>=32 for _ in line] for line in self._grid])
+        self.Q = Q(list(self.ACTION_DICT.keys()), state_shape=self._grid.shape)
+        self.V = V(state_shape=self._grid.shape)
         self.reset()
 
-    def reset(self, random_init=False, state=None, path=True):
-        """
-        Resets the agent to the start position and time to 0.
+        return None
+
+    def reset(self, random_init: bool=False, 
+              state: Optional[Tuple[int]]=None) -> Tuple[int]:
+        """Resets the agent to the start/random/required position and time to 0.
+
+        Args:
+            random_init (bool): If True inits to a random position, otherwise
+                to the start coordinates.
+            state (tuple): The state to reinitialise
+
+        Returns:
+            state (tuple): posiiton of the agent
         """
         if not random_init:
             if not state is None: 
                 self.y, self.x = state
             else:
-                self.x = self.start_coordinates[1][0]
-                self.y = self.start_coordinates[0][0]
+                self.x = self._start_coordinates[1][0]
+                self.y = self._start_coordinates[0][0]
 
         else:
-            self.current_cell = 0
-            while self.current_cell == 0:
-                self.x = np.random.randint(low=0, high=self.grid.shape[1])
-                self.y = np.random.randint(low=0, high=self.grid.shape[0])
+            self._current_cell = 0
+            while self._current_cell == 0:
+                self.x = np.random.randint(low=0, high=self._grid.shape[1])
+                self.y = np.random.randint(low=0, high=self._grid.shape[0])
 
-        self.current_cell = self.grid[self.y, self.x]
+        self._current_cell = self._grid[self.y, self.x]
 
-        if path:
-            self.t = 0
-            self.path = []
+        self.t = 0
+        self.path = []
 
-        return [self.y, self.x]
+        return (self.y, self.x)
 
-    def step(self, action, memory=True):
-        """
-        Perfomrs the asked action
+    def step(self, action: Union[str, int])\
+            -> Tuple[Union[Tuple[int], int, bool, None]]:
+        """Perfomrs the asked action
+
+        Checks if the action is possible, and perfoms it, the agent stays in
+        place. Also checks the reward. The reward function is: 1 if done, 0
+        otherwise.
+
         Args:
-            > action: (int) The action to perdorm.
-                1000 up, 0100 right, 0010 down, 0001 left
-                      (str) "up", "right", "down", "left"
-                will be converted to int
+            action (str, int): The action to perform. 
+
+        Return:
+            state (tuple): The new position of the agent.
+            reward (int): The reward of the action
+            done (True): If True, the episode is over.
+            None
         """
         if isinstance(action, str):
-            action = self.action_dict[action]
+            action = self.ACTION_DICT[action]
 
-        if not self.check_action_(action):
+        if not self._check_action_(action):
             pass
 
         else:
@@ -87,34 +146,25 @@ class  GridWorld(object):
             self.x += x_moove
             self.y += y_moove
 
-        if memory:
-            self.path.append([self.x, self.y])
+        self.path.append([self.x, self.y])
+
         self.t += 1
-        self.current_cell = self.grid[self.y, self.x]
-        done = self.check_terminate_()
+        self._current_cell = self._grid[self.y, self.x]
+        done = self._check_terminate_()
         if done:
             reward = 1 
         else :
             reward = 0
 
-        return [self.y, self.x], reward, done, None
+        return (self.y, self.x), reward, done, None
         
-    def check_action_(self, action):
-        """
-        Checks if the proposed action is possible to execute
-        Args: see self.step
-        """
-        return self.count_ones_binary(self.current_cell + action) ==\
-                self.count_ones_binary(self.current_cell) + 1
-    
-    def check_terminate_(self):
-        """
-        If the state is terminal returns True, False otherwise
-        """
-        return self.current_cell >= 32
+    def render_path_and_V(self, scale: int=1.5) -> None:
+        """Plots the path taken by the agent and the Value function.
 
-    def render_path_and_V(self, scale=1.5):
-        shape = tuple([_*0.5 for _ in self.grid.shape])
+        Args:
+            scale (float): size of the figures
+        """
+        shape = tuple([_*0.5 for _ in self._grid.shape])
         plt.figure(figsize=(shape[1]*scale*2+1, shape[0]*scale))
         plt.subplot(1,2,1)
         self.render_path(fig=True, show=False)
@@ -122,45 +172,62 @@ class  GridWorld(object):
         self.render_V(fig=True, show=False)
         plt.show()
 
-    def render_board(self, scale=1.5, show=True, fig=False):
-        """
-        displays a figure with the labirynth.
-        Args
+        return None
+
+    def render_board(self, scale= float:1.5, show: bool=True,
+                     fig: bool=False) -> None:
+        """displays a figure with the labirynth.
+
+        Args:
+            scale (float): size of the figures
+            show (bool): Wether to show the figure
+            fig (bool): If False, plots on the currently opened figure.
+
+        return:
+            None
         """
         if not fig:
-            shape = tuple([_*0.5 for _ in self.grid.shape])
+            shape = tuple([_*0.5 for _ in self._grid.shape])
             plt.figure(figsize=(shape[1]*scale, shape[0]*scale))
         
-        plt.ylim(self.grid.shape[0]+0.1, -0.1)
-        plt.xlim(-0.1,self.grid.shape[1]+0.1)
+        plt.ylim(self._grid.shape[0]+0.1, -0.1)
+        plt.xlim(-0.1,self._grid.shape[1]+0.1)
 
-        for i in range(self.grid.shape[0]):
-            for j in range(self.grid.shape[1]):
-                for ind,_ in enumerate(bin(256+self.grid[i,j])[-4:]):
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
+                for ind,_ in enumerate(bin(256+self._grid[i,j])[-4:]):
                     if _ == "1": 
-                        x_modif, y_modif = self.get_trace_(ind)
+                        x_modif, y_modif = self._TRACE[ind]
                         x = [j+x_modif[0], j+x_modif[1]]
                         y = [i+y_modif[0], i+y_modif[1]]
                         plt.plot(x,y,"k-", linewidth=5)
 
-        plt.text(x=self.start_coordinates[1]+0.5,
-                 y=self.start_coordinates[0]+0.5, s="START",
+        plt.text(x=self._start_coordinates[1]+0.5,
+                 y=self._start_coordinates[0]+0.5, s="START",
                     bbox={'facecolor':'purple','alpha':1,'edgecolor':'none','pad':1},
                     ha='center', va='center', color='white')
-        plt.text(x=self.end_coordinates[1]+0.5,
-                 y=self.end_coordinates[0]+0.5, s="END",
+        plt.text(x=self._end_coordinates[1]+0.5,
+                 y=self._end_coordinates[0]+0.5, s="END",
                     bbox={'facecolor':'purple','alpha':1,'edgecolor':'none','pad':1},
                     ha='center', va='center', color='white')
 
         if show:
             plt.show()
 
-    def render_path(self, fig=False, show=True):
-        """
-        Plots the path taken by the agent up to now
+        return None
+
+    def render_path(self, fig: bool=False, show: bool=True) -> None:
+        """Plots the path taken by the agent up to now
+
+        Args:
+            show (bool): Wether to show the figure
+            fig (bool): If False, plots on the currently opened figure.
+
+        return:
+            None
         """
         self.render_board(show=False, fig=fig)
-        current_pos = (self.start_coordinates[1][0], self.start_coordinates[0][0])
+        current_pos = (self._start_coordinates[1][0], self._start_coordinates[0][0])
         for next_pos in self.path:
             x = [current_pos[0]+1/2, next_pos[0]+1/2]
             y = [current_pos[1]+1/2, next_pos[1]+1/2]
@@ -172,9 +239,18 @@ class  GridWorld(object):
         if show:
             plt.show()
 
-    def render_V(self, fig=False, show=True, f='Q'):
-        """
-        plots the V map
+        return None
+
+    def render_V(self, fig=False, show=True, from='Q'):
+        """Plots the Value function
+
+        Args:
+            show (bool): Wether to show the figure
+            fig (bool): If False, plots on the currently opened figure.
+            from (str): from which source to plot the Value function
+
+        return:
+            None
         """
         self.Q.get_V()
         self.render_board(show=False, fig=fig)
@@ -190,32 +266,37 @@ class  GridWorld(object):
         if show:
             plt.show()
 
+        return None
 
-    @staticmethod
-    def get_trace_(n):
-        """
-        returns the path to trace the line [x_start, x_end], [y_start, y_end]
+    def _check_action_(self, action: int) -> bool:
+        """Checks if the proposed action is possible to execute
+
         Args:
-            > n: (int) a number between 0 and 3
+            action (int): The action to perform
+
+        Return:
+            None
         """
-        if n==0:
-            return [0,1], [0,0]
+        return self.count_ones_binary(self._current_cell + action) ==\
+                self.count_ones_binary(self._current_cell) + 1
+    
+    def _check_terminate_(self) -> bool:
+        """If the state is terminal returns True, False otherwise
 
-        elif n==1:
-            return [1,1], [0,1]
-
-        elif n==2:
-            return [0,1], [1,1]
-
-        elif n==3:
-            return [0,0], [0,1]
-
+        Returns:
+            terminate (bool)
+        """
+        return self._current_cell >= 32
 
     @staticmethod
-    def action_results_(action):
-        """
-        returns the state modification of an action
-        Args: see self.step
+    def action_results_(action: int) -> Tuple[int]:
+        """ returns the state modification of an action
+
+        Args:
+            action (str, int): The action to perform. 
+
+        Returns:
+            state modif (tuple)
         """
         if action == 8:
             return 0, -1
@@ -230,11 +311,21 @@ class  GridWorld(object):
             return -1, 0
 
     @staticmethod
-    def count_ones_binary(number):
+    def count_ones_binary(number: int) -> int:
+        """Counts the number of ones in the binary writting of a number
+
+        Args:
+            number (int)
+
+        Return:
+            result (int)
+        """
         return len([one for one in bin(number)[2:] if one=="1"])
 
     @staticmethod
-    def generate_grid_(size):
+    def _generate_grid_(size: Tuple[int]) -> np.array:
+        """Generates a random grid
+        """
         grid = np.zeros(shape=size, dtype=int)
         visited = grid != 0
 
@@ -248,11 +339,11 @@ class  GridWorld(object):
         stack = [cell]
         while len(stack) > 0:
             unvisited_neighbors = [pos for pos in
-                                   GridWorld.get_neighbors_(cell, clip=size) if not
+                                   GridWorld._get_neighbors_(cell, clip=size) if not
                                    visited[pos]]
             if len(unvisited_neighbors) > 0:
                 next_cell = unvisited_neighbors[np.random.randint(len(unvisited_neighbors))]
-                cell_modif, next_cell_modif = GridWorld.get_wall_(cell, next_cell)
+                cell_modif, next_cell_modif = GridWorld._get_wall_(cell, next_cell)
                 grid[cell] -= cell_modif
                 grid[next_cell] -= next_cell_modif
                 stack.append(next_cell)
@@ -268,11 +359,8 @@ class  GridWorld(object):
         return grid
                 
     @staticmethod
-    def get_wall_(state_1, state_2):
-        """
-        returns the wall corresponding to the transition from state one to
-        state two
-        Args: tuple, tuple
+    def _get_wall_(state_1: Tuple[int], state_2: Tuple[int]) -> Tuple[int]:
+        """ returns the wall corresponding to the transition from state one to state two
         """
         transition = tuple(map(operator.sub, state_2, state_1))
         if transition == (0, -1):
@@ -288,7 +376,7 @@ class  GridWorld(object):
             return 8, 2
 
     @staticmethod
-    def get_neighbors_(cell, clip):
+    def _get_neighbors_(cell, clip):
         return [pos for pos in [tuple(map(operator.add, cell, (1,0))), 
                 tuple(map(operator.add, cell, (-1,0))), 
                 tuple(map(operator.add, cell, (0,1))),
