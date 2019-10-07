@@ -64,23 +64,3 @@ class Q(object):
         else:
             return self.segment_(observation, action)
 
-    #def save(self, path):
-    #    if not os.path.exists(path):
-    #        os.mkdir(path)
-    #        
-    #    np.save(os.path.join(path, "W.npy"), self.W)
-    #    if not discrete:
-    #        np.save(os.path.join(path, "segmentation.npy"), self.segmentation)
-
-    #@classmethod
-    #def Load(cls, path):
-    #    Q_ = cls.__new__(cls)
-    #    Q_.W = np.load(os.path.join(path, "W.npy"))
-    #    if os.path.exists(os.path.join(path, "high.npy")):
-    #        Q_.discrete = False
-    #        Q_.segmentation = np.load(os.path.join(path, "segmentation.npy"))
-
-    #    else:
-    #        Q_.discrete = True
-    #    
-    #    return Q_k
