@@ -20,16 +20,19 @@ Note that this is usefull to replicate the exact setting I use to develop and te
 
 ##  Description
 
-Each notebook presents some teoritical concepts and a new application. Here we describe the notebooks in the order they are meant to be read.
+Each notebook presents some theoritical concepts and a new application. Here we describe the notebooks in the order they are meant to be read.
 
-### `IntroGridWorld`
+### `IntroGridWorld.ipynb`
 
-This notebook proposes a theoritical introducation to _Q-Learning_, a short presentation of the classes I implemented to make the experimentationo seamless to the reader and application of the basic _Q-Learning_ algorithm on *maze* problem.
+This notebook proposes a theoritical introduction to _Q-Learning_, a short presentation of the classes I implemented to make the experimentations seamless to the reader and application of the basic _Q-Learning_ algorithm on a *maze* problem.
 
-### `CartPole`
+### `CartPole.ipynb`
 
 This notebook introduces the discretization of the _Q-table_ and demonstrates the importance of the hyper-parameters. The problem is applied to the `CartPole-v1` environment of the [Gym AI](https://gym.openai.com) library.
 
+### `LunarLander.ipynb`
+
+Presentation and implementation of _Deep-Q-learning_. The algorithm is applied to the `LunarLander-v2` environment of [Gym AI](https://gym.openai.com).
 
 ## TODO
 
