@@ -29,7 +29,7 @@ class Q(object):
     def __init__(self, actions: List, discrete: bool=True, 
                  state_shape: Optional[Tuple]=None,
                  segmentation: Optional[List]=None, 
-                 init_range: List[int]=[0,1]) -> None:
+                 init_range: List[float]=[0,0.1]) -> None:
         """Initialises the Q table.
 
         If the sate is not discrete it is segmented according to the
@@ -48,17 +48,16 @@ class Q(object):
             None
         """
         self._discrete = discrete
-        if self._discrete:
-            if isinstance(actions, list):
-                self._action_dict = {_:ind for ind,_ in enumerate(actions)}
+        self._action_dict = {_:ind for ind,_ in enumerate(actions)}
 
+        if self._discrete:
             self.W = np.random.uniform(low=init_range[0], high=init_range[1],
                                        size=tuple(list(state_shape)+[len(actions)]))
 
         else:
             shape = [len(_)+2 for _ in segmentation]
             self.W = np.random.uniform(low=init_range[0], high=init_range[1],
-                                       size=tuple(shape + [actions]))
+                                       size=tuple(list(shape) + [len(actions)]))
             self._segmentation = segmentation
 
         return None
@@ -97,7 +96,7 @@ class Q(object):
 
         return None
     
-    def _get_V(self, observation: Optional[Tuple[int]]=None)\
+    def get_V(self, observation: Optional[Tuple[int]]=None)\
             -> Union[None, float]:
         """If no observation is provided, updates the Value function, else returns the
         required value function for the provided observation.
@@ -108,7 +107,7 @@ class Q(object):
         Returns:
             (float, None)
         """
-        if not observation:
+        if observation is None:
             self.V = np.max(self.W, -1)
 
         else:
@@ -124,7 +123,7 @@ class Q(object):
             action (int, str)
 
         Return:
-            position (tuple)
+            position (list)
         """
         query = [] 
         for _, segm in enumerate(self._segmentation):
@@ -139,7 +138,7 @@ class Q(object):
 
         return tuple(query)
     
-    def _get_query_(self, observation: Tuple[int], 
+    def _get_query_(self, observation: Union[List[int], Tuple[int]], 
                  action: Optional[Union[str, int]]=None) -> Tuple[int]:
         """Returns the position in the Q-table for any input
 
@@ -150,11 +149,14 @@ class Q(object):
         Return:
             position (tuple)
         """
+        if not isinstance(observation, list):
+            observation = list(observation)
+
         if self._discrete:
             if hasattr(self, "_action_dict") and not action is None:
                 action = self._action_dict[action]
 
-            if action:
+            if not action is None:
                 return tuple(observation + [action])
 
             else:

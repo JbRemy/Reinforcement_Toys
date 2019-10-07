@@ -1,7 +1,7 @@
 from .Q import Q
 from .V import V
 
-from typing import Union, Type, List
+from typing import Union, Type, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -174,7 +174,7 @@ class  GridWorld(object):
 
         return None
 
-    def render_board(self, scale= float:1.5, show: bool=True,
+    def render_board(self, scale: float=1.5, show: bool=True,
                      fig: bool=False) -> None:
         """displays a figure with the labirynth.
 
@@ -241,13 +241,13 @@ class  GridWorld(object):
 
         return None
 
-    def render_V(self, fig=False, show=True, from='Q'):
+    def render_V(self, fig: bool=False, show: bool=True, f: str='Q') -> None:
         """Plots the Value function
 
         Args:
             show (bool): Wether to show the figure
             fig (bool): If False, plots on the currently opened figure.
-            from (str): from which source to plot the Value function
+            f (str): from which source to plot the Value function
 
         return:
             None
@@ -259,6 +259,7 @@ class  GridWorld(object):
 
         if f == 'V':
             plt.pcolormesh(self.V.W, cmap="hot")
+
         ax = plt.gca()
         ax.set_aspect('equal')
         plt.title("State of the value function")

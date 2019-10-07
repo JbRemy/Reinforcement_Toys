@@ -1,6 +1,8 @@
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Type
 import numpy as np
-import .Q
+from .Q import Q
+
+Q_type = Type[Q]
 
 class PolicyEpsilonGreedy(object):
     """This is an implementation of the epsilon greedy policy with respect to a
@@ -15,7 +17,7 @@ class PolicyEpsilonGreedy(object):
                  be_greedy: bool=False) -> Union[int, str]:
             Returns an action with respect to the policy
     """
-    def __init__(self, Q: Q, action_space: List[Union[int, str]], 
+    def __init__(self, Q: Q_type, action_space: List[Union[int, str]], 
                  epsilon: float, decay: float, lower: float, 
                  decay_every: int) -> None:
         """Initializes the Policy
@@ -63,6 +65,7 @@ class PolicyEpsilonGreedy(object):
         vals = [self._Q(state, action) for action in self._action_space]
         if be_greedy:
             return self._action_space[np.argmax(vals)]
+
         else:
             probs = self._probs.copy()
             probs[np.argmax(vals)] = 1 - self._epsilon
@@ -72,7 +75,7 @@ class PolicyEpsilonGreedy(object):
             self._t += 1
             return np.random.choice(self._action_space, p=probs)
     
-    def do_decay(self) -> None:
+    def _do_decay(self) -> None:
         """Decays the learning rate
 
         Returns: 

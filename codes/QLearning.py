@@ -24,11 +24,13 @@ class QLearner(object):
         self.gamma = gamma
         self.max_steps = max_steps
         self.Q_ = Q_
-        self.policy = PolicyEpsilonGreedy(Q_, Q_.actions_size, epsilon, 
+        self.policy = PolicyEpsilonGreedy(Q_, len(Q_._action_dict), epsilon, 
                                           epsilon_decay, epsilon_min, epsilon_decay_every)
         self.lr = LearningRate(lr0=lr0, decay=lr_decay, min_lr=min_lr, 
-                               discrete=Q_.discrete, actions_size=Q_.actions_size, 
-                               state_shape=Q_.W.shape[:-1])
+                               discrete=Q_._discrete,
+                               actions_size=len(Q_._action_dict),
+                               state_shape=Q_.W.shape[:-1],
+                               segmentation=Q_._segmentation)
     
     def fit(self, n_episodes, logg_every_episode=50):
         rewards = [0]*n_episodes
