@@ -36,9 +36,7 @@ Presentation and implementation of _Deep-Q-learning_. The algorithm is applied t
 
 ## TODO
 
-* Verify and update the description of the classes in the first notebook
 * Add explration vs exploitation trade-off visualization on the first task
-* Add more complex tasks, and algorithms (DeepQ, Lunar lander)
-* Complete README for codes
-* Update Notebook description (images)
+* Add documentations in codes that need it.
+* Add description in `IntroGridWorld.ipynb`
 
